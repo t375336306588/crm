@@ -57,4 +57,5 @@ class TicketController extends Controller
             ],
         ]);
     }
+
 }
