@@ -5,8 +5,10 @@ namespace Database\Seeders;
 use App\Models\User;
 use App\Models\Customer;
 use App\Models\Ticket;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Spatie\Permission\Models\Role;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 class DatabaseSeeder extends Seeder
 {
@@ -17,19 +19,30 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        $adminRole = Role::firstOrCreate(['name' => 'admin']);
+        $userRole  = Role::firstOrCreate(['name' => 'user']);
 
-        User::factory()->create([
-            'name' => 'Admin Manager',
-            'email' => 'admin@example.com',
-            'password' => bcrypt('password'),
-            'role' => 'admin',
-        ]);
+        $admin = User::firstOrCreate(
+            ['email' => 'admin@example.com'],
+            [
+                'name' => 'Admin Manager',
+                'password' => Hash::make('password'),
+            ]
+        );
+        $admin->assignRole($adminRole);
 
-        User::factory(5)->create();
+        $testUser = User::firstOrCreate(
+            ['email' => 'test@example.com'],
+            [
+                'name' => 'Test User',
+                'password' => Hash::make('password'),
+            ]
+        );
+        $testUser->assignRole($userRole);
+
+        User::factory(5)->create()->each(function ($user) use ($userRole) {
+            $user->assignRole($userRole);
+        });
 
         Customer::factory(10)
             ->has(Ticket::factory()->count(3))
